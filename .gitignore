@@ -1,0 +1,22 @@
+# --- Python ---
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.log
+
+# Environment files
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# --- React frontend ---
+blogsearch-frontend/node_modules/
+blogsearch-frontend/build/
+blogsearch-frontend/.env
+
+# macOS & Windows system files
+.DS_Store
+Thumbs.db
