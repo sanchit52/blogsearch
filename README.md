@@ -30,3 +30,10 @@ Workflow Process:
 6. Storage: Processed data stored in MongoDB Atlas
 7. Search: Hybrid search combining TF-IDF, text search, and PageRank scores
 8. Frontend: React application displays filtered personal blog results
+
+SetUp:
+Prerequisites: Python 3.12+, MongoDB Atlas account
+Clone the repository by running git clone https://github.com/sanchit52/blogsearch.git
+Setup Environment : Configure .env file with MongoDB connection string
+install the requirements from blogsearch/requirements.txt
+Start Services : Launch Flask API and React frontend
