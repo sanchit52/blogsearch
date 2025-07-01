@@ -104,6 +104,7 @@ HTTPERROR_ALLOWED_CODES = [403, 429]
 # Set settings whose default value is deprecated to a future-proof value
 FEED_EXPORT_ENCODING = "utf-8"
 FEEDS = {
+    'scraped_blogs.jsonl': {'format': 'jsonlines','encoding': 'utf8',},
     "../data/raw/personal_blogs.jsonl": {"format": "jsonlines", "encoding": "utf8"},
     "../data/raw/non_personal_blogs.jsonl": {"format": "jsonlines", "encoding": "utf8"},
 }
