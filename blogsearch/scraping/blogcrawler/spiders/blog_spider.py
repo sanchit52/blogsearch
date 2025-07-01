@@ -1,87 +1,69 @@
+# import scrapy
+# import json
+# import os
+# from urllib.parse import urlparse, urljoin
+
+# class BlogSpider(scrapy.Spider):
+#     name = "blog_spider"
+
+#     def start_requests(self):
+#         file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'personal_blogs.jsonl'))
+#         with open(file_path, encoding='utf-8') as f:
+#             for line in f:
+#                 url = json.loads(line).get('url')
+#                 if url:
+#                     yield scrapy.Request(url, callback=self.parse_links, meta={'root': url})
+
+#     def parse_links(self, response):
+#         root = response.meta['root']
+#         base = "{uri.scheme}://{uri.netloc}".format(uri=urlparse(root))
+#         links = set(response.css('a::attr(href)').getall())
+
+#         for href in links:
+#             full_url = urljoin(base, href)
+#             parsed = urlparse(full_url)
+#             path = parsed.path.lower()
+
+#             # Filter out feeds, home, category, etc.
+#             if any(bad in path for bad in ['/feed', '/rss', '/category', '/tag', '/archive']):
+#                 continue
+
+#             # Require path depth >= 2 (e.g., /2024/06/post-title or /blog/post)
+#             if len([seg for seg in parsed.path.split('/') if seg]) < 2:
+#                 continue
+
+#             # Don't go to other domains
+#             if parsed.netloc != urlparse(root).netloc:
+#                 continue
+
+#             yield scrapy.Request(full_url, callback=self.parse_post, meta={'origin': root})
+
+#     def parse_post(self, response):
+#         # Look for <article> or long text content
+#         paragraphs = response.css('article p::text').getall()
+#         if not paragraphs:
+#             paragraphs = response.css('p::text').getall()
+
+#         content = '\n\n'.join(p.strip() for p in paragraphs if p.strip())
+
+#         if len(content.split()) < 100:  # discard very short pages
+#             return
+
+#         title = response.css('title::text').get(default='').strip()
+#         yield {
+#             'url': response.url,
+#             'origin': response.meta['origin'],
+#             'title': title,
+#             'content': content
+#         }
 import scrapy
-from pathlib import Path
-from newspaper import Article
-from blogcrawler.items import BlogPost
 
+class TestSpider(scrapy.Spider):
+    name = "test_spider"
+    start_urls = ['https://example.com']
 
-class BlogSpider(scrapy.Spider):
-    name = "blog_spider"
-    custom_settings = {
-        "DOWNLOAD_DELAY": 0.5,
-    }
-
-    def start_requests(self):
-        # Go up two levels from blog_spider.py to reach the scraping/ folder
-        base_path = Path(__file__).resolve().parents[2]  # blogsearch/scraping/
-        sources_dir = base_path / "sources"
-
-        for label, fname in [
-            ("personal", sources_dir / "personal_sources.txt"),
-            ("non_personal", sources_dir / "non_personal_sources.txt"),
-        ]:
-            if not fname.exists():
-                self.logger.warning(f"[WARN] Missing source file: {fname}")
-                continue
-
-            with open(fname, encoding="utf-8") as f:
-                for url in f:
-                    url = url.strip()
-                    if url:
-                        yield scrapy.Request(url=url, callback=self.parse_home, meta={"label": label})
-
-
-    def parse_home(self, response):
-        label = response.meta["label"]
-        base_url = response.url
-
-        # Collect all blog post links from homepage
-        for link in response.css("a::attr(href)").getall():
-            full_url = response.urljoin(link)
-            if self.is_blog_post(full_url):
-                yield scrapy.Request(full_url, callback=self.parse_post, meta={"label": label})
-
-    def parse_post(self, response):
-        label = response.meta["label"]
-
-        try:
-            art = Article(response.url)
-            art.download()
-            art.parse()
-        except Exception as e:
-            self.logger.warning(f"[WARN] Failed to parse article: {response.url} | {e}")
-            return
-
-        if self.filter_blog(art):
-            yield BlogPost(
-                title=art.title,
-                url=response.url,
-                content=art.text,
-                label=label,
-            )
-
-    def is_blog_post(self, url):
-        url = url.lower()
-        indicators = [
-            "202", "blog", "post", "journey", "career", "story",
-            "tech", "developer", "engineer", "manager", "experience",
-            "project", "my-journey", "how-i", "learning"
-        ]
-        return any(keyword in url for keyword in indicators) and not url.endswith(".xml")
-
-    def filter_blog(self, article):
-        text = (article.text or "").strip()
-        title = (article.title or "").strip()
-
-        # Apply basic filters
-        if len(text.split()) < 200:
-            return False
-
-        bad_keywords = ["dear diary", "dream log", "astrological chart"]
-        bad_titles = ["entry", "daily", "log", "reflection"]
-
-        if any(kw in text.lower() for kw in bad_keywords):
-            return False
-        if any(bt in title.lower() for bt in bad_titles):
-            return False
-
-        return True
+    def parse(self, response):
+        yield {
+            "title": response.css("h1::text").get(),
+            "url": response.url
+        }
